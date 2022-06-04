@@ -5,6 +5,8 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP as oaep
 from Crypto.Signature import pkcs1_15 as pkcs
 from Crypto.Hash import SHA256
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 
 
 def create_connection():
@@ -46,6 +48,29 @@ def is_valid_aes_key(signature):
         return False
 
 
+def send_message():
+    message = str.encode("hello")
+
+    aes_cipher = AES.new(AES_KEY, AES.MODE_CBC, IV)
+    encrypted_message = aes_cipher.encrypt(pad(message, AES.block_size))
+    server.send(encrypted_message)
+    print(f"\nSent AES key encrypted message: {message.decode('utf-8')}")
+
+
+def receive_message():
+    message = server.recv(1024)
+    print("\nReceived AES encrypyted message. Decrypting...")
+
+    aes_cipher = AES.new(AES_KEY, AES.MODE_CBC, IV)
+    decrypted_message = unpad(aes_cipher.decrypt(message), AES.block_size)
+    decoded_message = decrypted_message.decode("utf-8")
+    print(f"The decrypted message is: {decoded_message}")
+
+    if decoded_message != "hello to you too":
+        print("Received invalid message. Disconnecting...")
+        exit(0)
+
+
 if __name__ == "__main__":
     server = create_connection()
     initialize_handshake()
@@ -63,3 +88,10 @@ if __name__ == "__main__":
         print(f"\nAES key validation failed. Disconnecting from server...")
         exit(0)
     sleep(3)
+
+    send_message()
+    receive_message()
+
+    sleep(3)
+    print("\nDisconnecting client...")
+    exit(0)
