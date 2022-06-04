@@ -129,6 +129,10 @@ dmypy.json
 .pyre/
 
 
-# Ignore public and private keys
+# public and private keys
 security/private_key.pem
 security/public_key.pem
+
+# AES and IV keys
+security/aes_key
+security/iv
