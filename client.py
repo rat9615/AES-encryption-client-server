@@ -3,6 +3,8 @@ from utils import util
 from time import sleep
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP as oaep
+from Crypto.Signature import pkcs1_15 as pkcs
+from Crypto.Hash import SHA256
 
 
 def create_connection():
@@ -29,7 +31,35 @@ def initialize_handshake():
     print("\nInitiated handshake")
 
 
+def is_valid_aes_key(signature):
+    sha256_hash = SHA256.new(AES_KEY)
+    with open("security/public_key.pem", "rb") as file_pub:
+        public_key = RSA.import_key(file_pub.read())
+
+    try:
+        print("\nValidating AES key...")
+        pkcs.new(public_key).verify(sha256_hash, signature)
+        print("Signed AES key is valid.")
+        return True
+    except (ValueError, TypeError) as ex:
+        print(f"Invalid AES key: {ex}")
+        return False
+
+
 if __name__ == "__main__":
     server = create_connection()
     initialize_handshake()
+    sleep(3)
+
+    signature = server.recv(1024)
+
+    with open("security/aes_key", "rb") as f:
+        AES_KEY = f.read()
+
+    with open("security/iv", "rb") as f:
+        IV = f.read()
+
+    if not is_valid_aes_key(signature):
+        print(f"\nAES key validation failed. Disconnecting from server...")
+        exit(0)
     sleep(3)

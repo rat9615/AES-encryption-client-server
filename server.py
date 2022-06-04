@@ -3,6 +3,8 @@ from utils import util
 from security.keys import generate_keys
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP as oaep
+from Crypto.Signature import pkcs1_15 as pkcs
+from Crypto.Hash import SHA256
 
 
 def bind_connection():
@@ -33,6 +35,15 @@ def is_handshake_complete():
     return True
 
 
+def generate_signed_aes_key():
+    with open("security/private_key.pem", "rb") as file_pub:
+        private_key = RSA.import_key(file_pub.read())
+
+    sha256_hash = SHA256.new(AES_KEY)
+    aes_sign_key = pkcs.new(private_key).sign(sha256_hash)
+    return aes_sign_key
+
+
 if __name__ == "__main__":
     generate_keys()
     server = bind_connection()
@@ -45,3 +56,9 @@ if __name__ == "__main__":
             server.shutdown(socket.SHUT_RDWR)
             server.close()
             exit(0)
+
+        print("\nSending signed AES key to client...")
+        AES_KEY = util.generate_aes_key()
+        IV = util.generate_iv()
+        aes_signed_key = generate_signed_aes_key()
+        client.send(aes_signed_key)
