@@ -127,3 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# Ignore public and private keys
+security/private_key.pem
+security/public_key.pem
